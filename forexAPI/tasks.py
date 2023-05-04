@@ -5,14 +5,13 @@ from urllib.request import urlopen, Request
 from .models import Currency
 
 @shared_task
-# some heavy stuff here
 def create_currency():
     print('Creating forex data ..')
     req = Request('https://www.investing.com/currencies/single-currency-crosses', headers={'User-Agent': 'Mozilla/5.0'})
     html = urlopen(req).read()
     bs = BeautifulSoup(html, 'html.parser')
     # get first 5 rows
-    currencies = bs.find("tbody").find_all("tr")[0:5]
+    currencies = bs.find("tbody").find_all("tr")[:5]
     # enumerate rows to include index inside class name
     # starting index from 1
     for idx, currency in enumerate(currencies, 1):
@@ -26,7 +25,7 @@ def create_currency():
         time = currency.find("td", class_=f"pid-{idx}-time").text
 
         print({'pair':pair, 'bid':bid, 'ask':ask, 'high':high, 'low':low, 'change':change, 'change_p':change_p, 'time':time})
-        
+
         # create objects in database
         Currency.objects.create(
             pair=pair,
@@ -42,13 +41,12 @@ def create_currency():
         sleep(5)
 
 @shared_task
-# some heavy stuff here
 def update_currency():
     print('Updating forex data ..')
     req = Request('https://www.investing.com/currencies/single-currency-crosses', headers={'User-Agent': 'Mozilla/5.0'})
     html = urlopen(req).read()
     bs = BeautifulSoup(html, 'html.parser')
-    currencies = bs.find("tbody").find_all("tr")[0:5]
+    currencies = bs.find("tbody").find_all("tr")[:5]
     for idx, currency in enumerate(currencies, 1):
         pair = currency.find("td", class_="plusIconTd").a.text
         bid = currency.find("td", class_=f"pid-{idx}-bid").text
